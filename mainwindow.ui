@@ -14,18 +14,18 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLineEdit" name="lineEdit"/>
+    </item>
+    <item>
      <widget class="QLabel" name="label">
       <property name="text">
        <string>Word for indexing</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QLineEdit" name="lineEdit"/>
-    </item>
-    <item row="1" column="0" colspan="2">
+    <item>
      <widget class="QTreeWidget" name="treeWidget">
       <attribute name="headerMinimumSectionSize">
        <number>100</number>
@@ -43,6 +43,13 @@
         <string>index</string>
        </property>
       </column>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="actionCancel">
+      <property name="text">
+       <string>Cancel</string>
+      </property>
      </widget>
     </item>
    </layout>

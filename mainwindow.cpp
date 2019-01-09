@@ -36,6 +36,7 @@ main_window::main_window(QWidget *parent)
     qRegisterMetaType<my_file>("my_file");
     ui->lineEdit->setHidden(true);
     ui->label->setHidden(true);
+    ui->actionCancel->setHidden(true);
     //scan_directory(QDir::homePath());
 }
 
@@ -101,7 +102,7 @@ void main_window::searching()
                          SIGNAL(send_index(QString, int)),
                          this,
                          SLOT(show_index(QString, int)));
-
+    Thread->start();
     emit start_indexing(pattern, files);
 }
 
