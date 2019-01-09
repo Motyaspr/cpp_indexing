@@ -4,6 +4,7 @@
 #include <qfile.h>
 #include <qtextstream.h>
 #include <qvector.h>
+#include <QThread>
 
 void trigram_counter::process_directory(){
     QDirIterator it(dir, QDir::Files, QDirIterator::Subdirectories);
@@ -12,6 +13,10 @@ void trigram_counter::process_directory(){
         process_file(cur);
         if (cur.is_good)
             emit send_files(cur);
+        if (QThread::currentThread()->isInterruptionRequested()){
+            emit finish();
+            return;
+        }
     }
     emit finish();
 }
@@ -25,6 +30,10 @@ void trigram_counter::find_substring_directory(QString pattern, QVector<my_file>
     for (int i = 2; i < my_vector.size(); i++)
         trigrams.insert(get_hash(my_vector[i - 2], my_vector[i - 1], my_vector[i]));
     for (auto it : files){
+        if (QThread::currentThread()->isInterruptionRequested()){
+            emit finish();
+            return;
+        }
         int v = check(trigrams, it, pattern);
         if (v != -1)
             emit send_index(it.filename, v);

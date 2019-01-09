@@ -32,6 +32,7 @@ main_window::main_window(QWidget *parent)
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
     connect(ui->actionAbout, &QAction::triggered, this, &main_window::show_about_dialog);
     connect(ui->lineEdit, &QLineEdit::returnPressed, this, &main_window::searching);
+    connect(ui->actionCancel, SIGNAL(released()), SLOT(stop_search()));
     connect(&scanner, &QFileSystemWatcher::fileChanged, this, &main_window::update_file);
     qRegisterMetaType<my_file>("my_file");
     ui->lineEdit->setHidden(true);
@@ -54,8 +55,9 @@ void main_window::select_directory()
     ui->actionIndex_Directory->setDisabled(true);
     ui->lineEdit->setHidden(true);
     ui->label->setHidden(true);
+    ui->actionCancel->setHidden(false);
     scanner.removePaths(scanner.directories());
-    QThread *Thread = new QThread();
+    Thread = new QThread();
     trigram_counter *counter = new trigram_counter(dir);
     counter->moveToThread(Thread);
     files.clear();
@@ -84,10 +86,11 @@ void main_window::show_about_dialog()
 void main_window::searching()
 {
     QString pattern = ui->lineEdit->text();
-    QThread *Thread = new QThread();
+    Thread = new QThread();
     trigram_counter *counter = new trigram_counter(dir);
     ui->treeWidget->clear();
     ui->actionIndex_Directory->setDisabled(true);
+    ui->actionCancel->setHidden(false);
     //ui->lineEdit->setHidden(true);
     //ui->label->setHidden(true);
 
@@ -158,6 +161,9 @@ void main_window::onFinish()
     ui->label->setHidden(false);
     ui->lineEdit->setHidden(false);
     ui->actionIndex_Directory->setDisabled(false);
+    ui->actionCancel->setHidden(true);
+    Thread->quit();
+    Thread->wait();
 }
 
 void main_window::show_index(QString filename, int ind)
@@ -166,4 +172,9 @@ void main_window::show_index(QString filename, int ind)
     item->setText(0, filename);
     item->setText(1, QString::number(ind));
     ui->treeWidget->addTopLevelItem(item);
+}
+
+void main_window::stop_search()
+{
+    Thread->requestInterruption();
 }

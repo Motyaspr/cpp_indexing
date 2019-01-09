@@ -14,7 +14,7 @@ class MainWindow;
 class main_window : public QMainWindow
 {
     Q_OBJECT
-    //QThread *Thread;
+    QThread *Thread;
 public:
     explicit main_window(QWidget *parent = 0);
     ~main_window();
@@ -29,6 +29,7 @@ private slots:
     void show_files(my_file);
     void onFinish();
     void show_index(QString, int);
+    void stop_search();
 signals:
     void start_indexing(QString, QVector<my_file>);
 private:
