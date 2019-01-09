@@ -15,24 +15,28 @@ Q_OBJECT
 public:
     trigram_counter() = default;
     trigram_counter(QString t);
-    void process_file(my_file &file);
-    int is_file(my_file& filename, QString& pattern);
-    int check(QSet<quint64> &set, my_file &t, QString &pattern);
 public slots:
     void find_substring_directory(QString  dpattern, QVector<my_file> files);
     void process_directory();
+    void process_file(my_file &file);
 signals:
     //void send_status(QString const &);
     //void send_progress(qint16);
     void send_files(my_file);
     void send_index(QString, int);
+    void send_status(qint16 x);
     void finish();
 
 
 private:
+    int is_file(my_file& filename, QString& pattern);
+    int check(QSet<quint64> &set, my_file &t, QString &pattern);
     void get_trigram(QString &str, my_file &t);
+    qint16 get_percent();
     quint64 get_hash(const quint64& a, const quint64& b, const quint64& c);
     QString dir;
+    int total = 0;
+    int cur = 0;
 };
 
 #endif // TRIGRAM_COUNTER_H

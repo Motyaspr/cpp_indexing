@@ -38,6 +38,7 @@ main_window::main_window(QWidget *parent)
     ui->lineEdit->setHidden(true);
     ui->label->setHidden(true);
     ui->actionCancel->setHidden(true);
+    ui->progressBar->setHidden(true);
     //scan_directory(QDir::homePath());
 }
 
@@ -56,6 +57,8 @@ void main_window::select_directory()
     ui->lineEdit->setHidden(true);
     ui->label->setHidden(true);
     ui->actionCancel->setHidden(false);
+    ui->progressBar->setHidden(false);
+    ui->progressBar->setValue(1);
     scanner.removePaths(scanner.directories());
     Thread = new QThread();
     trigram_counter *counter = new trigram_counter(dir);
@@ -71,6 +74,7 @@ void main_window::select_directory()
     connect(counter, SIGNAL(finish()),
             this,
             SLOT(onFinish()));
+    connect(counter, SIGNAL(send_status(qint16)), this, SLOT(show_status(qint16)));
     //emit start_indexing(dir);
     Thread->start();
 }
@@ -91,9 +95,7 @@ void main_window::searching()
     ui->treeWidget->clear();
     ui->actionIndex_Directory->setDisabled(true);
     ui->actionCancel->setHidden(false);
-    //ui->lineEdit->setHidden(true);
-    //ui->label->setHidden(true);
-
+    ui->progressBar->setValue(1);
     ui->treeWidget->clear();
     counter->moveToThread(Thread);
     connect(Thread, &QThread::finished, Thread, &QObject::deleteLater);
@@ -105,6 +107,7 @@ void main_window::searching()
                          SIGNAL(send_index(QString, int)),
                          this,
                          SLOT(show_index(QString, int)));
+    connect(counter, SIGNAL(send_status(qint16)), this, SLOT(show_status(qint16)));
     Thread->start();
     emit start_indexing(pattern, files);
 }
@@ -177,4 +180,9 @@ void main_window::show_index(QString filename, int ind)
 void main_window::stop_search()
 {
     Thread->requestInterruption();
+}
+
+void main_window::show_status(qint16 x)
+{
+    ui->progressBar->setValue(x);
 }

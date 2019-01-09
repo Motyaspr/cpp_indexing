@@ -30,6 +30,7 @@ private slots:
     void onFinish();
     void show_index(QString, int);
     void stop_search();
+    void show_status(qint16 x);
 signals:
     void start_indexing(QString, QVector<my_file>);
 private:
