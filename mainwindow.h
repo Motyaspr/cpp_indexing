@@ -32,7 +32,7 @@ private slots:
     void stop_search();
     void show_status(qint16 x);
     void onFinish1(int);
-    void stop();
+    //void stop();
 signals:
     void start_indexing(QString);
     void startt();
