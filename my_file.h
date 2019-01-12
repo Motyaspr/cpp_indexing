@@ -10,7 +10,7 @@ public:
     my_file();
     my_file(QString name);
     QString get_filename();
-    QSet<quint64> trigrams;
+    QSet<int64_t> trigrams;
     bool is_good;
     QString filename;
 };

@@ -8,6 +8,7 @@
 
 void trigram_counter::process_directory(){
     QDirIterator it(dir, QDir::Files, QDirIterator::Subdirectories);
+    my_files.clear();
     QVector<my_file> files;
     total = 0;
     cur = 0;
@@ -23,36 +24,35 @@ void trigram_counter::process_directory(){
         if (ind % 10 == 0)
             send_status(get_percent());
         if (files[i].is_good)
-            emit send_files(files[i]);
+            my_files.push_back(files[i]);
         if (QThread::currentThread()->isInterruptionRequested()){
             emit send_status(get_percent());
-            emit finish();
+            emit finish1(my_files.size());
             return;
         }
     }
     emit send_status(100);
-    emit finish();
+    emit finish1(my_files.size());
 }
 
-void trigram_counter::find_substring_directory(QString pattern, QVector<my_file> files){
+void trigram_counter::find_substring_directory(QString pattern){
     QVector<quint64> my_vector;
-    QSet<quint64> trigrams;
-    for (int i = 0; i < pattern.size(); i++){
-        my_vector.push_back(pattern[i].unicode());
-    }
-    for (int i = 2; i < my_vector.size(); i++)
-        trigrams.insert(get_hash(my_vector[i - 2], my_vector[i - 1], my_vector[i]));
-    total = files.size();
+    QSet<int64_t> trigrams;
+
+    my_file v;
+    get_trigram(pattern, v);
+    QSet<int64_t> set1 = v.trigrams;
+    total = my_files.size();
     cur = 0;
     int ind = 0;
-    for (auto it : files){
+    for (auto it : my_files){
         ind++;
         if (QThread::currentThread()->isInterruptionRequested()){
             emit send_status(get_percent());
             emit finish();
             return;
         }
-        int v = check(trigrams, it, pattern);
+        int v = check(set1, it, pattern);
         cur++;
         if (ind % 10 == 0)
             send_status(get_percent());
@@ -64,7 +64,7 @@ void trigram_counter::find_substring_directory(QString pattern, QVector<my_file>
 
 }
 
-int trigram_counter::check(QSet<quint64> &set, my_file &t, QString &pattern){
+int trigram_counter::check(QSet<int64_t> &set, my_file &t, QString &pattern){
     for (auto it : set){
         if (t.trigrams.find(it) == t.trigrams.end()){
             return -1;
@@ -87,52 +87,47 @@ void trigram_counter::process_file(my_file &t)
         t.is_good = false;
         return;
     }
-    bool is_first_line = true;
-    QChar predlast = -1;
-    QChar last = -1;
-    bool can_we = true;
 
 
     QTextStream in(&file);
-    while(!in.atEnd())
-    {
-        QString str;
-        if (!is_first_line && can_we){
-            str += predlast;
-            str += last;
-        }
-        else{
-            if (!can_we)
-                is_first_line = false;
-        }
-        str += in.readLine();
-        get_trigram(str, t);
-        if (t.trigrams.size() > MAX_TRIGRAMS)
-        {
-            t.is_good = false;
-            t.trigrams.clear();
-            return;
-        }
-        if (str.size() > 2){
-            can_we = true;
-            last = str[str.size()-1];
-            predlast = str[str.size() - 2];
-        }
-        else{
-            can_we = false;
-        }
+    QString buffer;
+    while (buffer.append(in.read(BUFFER_SZ)).size() >= 3) {
+       QString cop = "";
+       get_trigram(buffer, t);
+       if (t.trigrams.size() > MAX_TRIGRAMS)
+       {
+           t.is_good = false;
+           t.trigrams.clear();
+           return;
+       }
+       for (int i = buffer.size() - 3 + 1; i < buffer.size(); i++){
+           cop += buffer[i];
+       }
+       buffer.clear();
+       buffer += cop;
     }
+}
 
+void trigram_counter::prepare(QString dir1)
+{
+    dir = dir1;
+    total = 0;
+    cur = 0;
+    my_files.clear();
 }
 
 void trigram_counter::get_trigram(QString &str, my_file &t)
 {
-    QVector<quint64> my_vector;
-    for (int i = 0; i < str.size(); i++){
-        my_vector.push_back(str[i].unicode());
+    if (str.size() < 3)
+        return;
+    auto data = str.data();
+    int64_t tri = (int64_t(data[1].unicode()) << 32) + (int64_t(data[0].unicode()) << 16);
+    for (int i = 2; i < str.size(); i++){
+        tri = (tri >> 16) + (int64_t(data[i].unicode()) << 32);
+        if (t.trigrams.size() > MAX_TRIGRAMS)
+            break;
+        t.trigrams.insert(tri);
     }
-    for (int i = 2; i < my_vector.size(); i++)
-        t.trigrams.insert(get_hash(my_vector[i - 2], my_vector[i - 1], my_vector[i]));
 }
 
 qint16 trigram_counter::get_percent()
@@ -173,7 +168,3 @@ int trigram_counter::is_file(my_file& filename, QString& pattern)
 }
 
 
-quint64 trigram_counter::get_hash(const quint64 &a, const quint64 &b, const quint64 &c)
-{
-    return ((a << 32) | (b << 16) | (c));
-}

@@ -2,6 +2,7 @@
 #define TRIGRAM_COUNTER_H
 
 #include <my_file.h>
+#include <QVector>
 #include <QObject>
 
 static const int MAX_TRIGRAMS = 20000;
@@ -16,9 +17,10 @@ public:
     trigram_counter() = default;
     trigram_counter(QString t);
 public slots:
-    void find_substring_directory(QString  dpattern, QVector<my_file> files);
+    void find_substring_directory(QString);
     void process_directory();
     void process_file(my_file &file);
+    void prepare(QString dir);
 signals:
     //void send_status(QString const &);
     //void send_progress(qint16);
@@ -26,17 +28,19 @@ signals:
     void send_index(QString, int);
     void send_status(qint16 x);
     void finish();
+    void finish1(int);
 
 
 private:
     int is_file(my_file& filename, QString& pattern);
-    int check(QSet<quint64> &set, my_file &t, QString &pattern);
+    int check(QSet<int64_t> &set, my_file &t, QString &pattern);
     void get_trigram(QString &str, my_file &t);
     qint16 get_percent();
-    quint64 get_hash(const quint64& a, const quint64& b, const quint64& c);
+    //qint32 get_hash(const QChar &a, const QChar &b, const QChar &c);
     QString dir;
     int total = 0;
     int cur = 0;
+    QVector<my_file> my_files;
 };
 
 #endif // TRIGRAM_COUNTER_H

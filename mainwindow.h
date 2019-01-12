@@ -32,16 +32,20 @@ private slots:
     void show_index(QString, int);
     void stop_search();
     void show_status(qint16 x);
+    void onFinish1(int);
 signals:
-    void start_indexing(QString, QVector<my_file>);
+    void start_indexing(QString);
+    void startt();
 private:
     QString dir;
     std::unique_ptr<Ui::MainWindow> ui;
     QVector<my_file> files;
     QTime t;
     int count;
+    trigram_counter *counter = nullptr;
+    bool f = true;
+    bool is_first_searching = true;
     QFileSystemWatcher scanner;
-    //trigram_counter *counter = nullptr;
 };
 
 #endif // MAINWINDOW_H
