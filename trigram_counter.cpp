@@ -27,23 +27,25 @@ void trigram_counter::process_directory(){
             my_files.push_back(files[i]);
         if (QThread::currentThread()->isInterruptionRequested()){
             emit send_status(get_percent());
-            emit finish1(my_files);
+            emit finish1(my_files.size());
             return;
         }
     }
     emit send_status(100);
-    emit finish1(my_files);
+    emit finish1(my_files.size());
 }
-void trigram_counter::find_substring_directory(QString pattern, QVector<my_file> files){
+
+void trigram_counter::find_substring_directory(QString pattern){
+    QVector<quint64> my_vector;
     QSet<int64_t> trigrams;
 
     my_file v;
     get_trigram(pattern, v);
     QSet<int64_t> set1 = v.trigrams;
-    total = files.size();
+    total = my_files.size();
     cur = 0;
     int ind = 0;
-    for (auto it : files){
+    for (auto it : my_files){
         ind++;
         if (QThread::currentThread()->isInterruptionRequested()){
             emit send_status(get_percent());
@@ -75,6 +77,7 @@ int trigram_counter::check(QSet<int64_t> &set, my_file &t, QString &pattern){
 
 trigram_counter::trigram_counter(QString t)
 {
+    connect(&scanner, &QFileSystemWatcher::fileChanged, this, &trigram_counter::update_file);
     dir = t;
 }
 
@@ -105,6 +108,53 @@ void trigram_counter::process_file(my_file &t)
        buffer += cop;
     }
 }
+
+void trigram_counter::prepare(QString dir1)
+{
+    dir = dir1;
+    total = 0;
+    cur = 0;
+    my_files.clear();
+    scanner.removePaths(scanner.directories());
+}
+
+void trigram_counter::update_file(const QString &filename)
+{
+    QFile fileinfo(filename);
+    int ind = -1;
+    for (int i = 0; i < my_files.size(); i++){
+        if (my_files[i].filename == filename){
+            ind = i;
+            break;
+        }
+    }
+    if (!fileinfo.exists() && ind != -1){
+        my_files.remove(ind);
+        scanner.removePath(filename);
+    }
+    trigram_counter t;
+    if (fileinfo.exists()){
+        my_file cur = my_file(filename);
+        t.process_file(cur);
+        if (ind == -1 && cur.is_good)
+            my_files.push_back(cur);
+        else{
+            if (!cur.is_good){
+                if (ind != -1)
+                    my_files.remove(ind);
+            }
+            else{
+                if (cur.is_good && ind != -1){
+                    my_files.remove(ind);
+                    my_files.push_back(cur);
+                }
+            }
+
+        }
+
+    }
+}
+
 
 void trigram_counter::get_trigram(QString &str, my_file &t)
 {
@@ -155,10 +205,4 @@ int trigram_counter::is_file(my_file& filename, QString& pattern)
     fileinfo.close();
     return -1;
 
-}
-
-
-quint64 trigram_counter::get_hash(const quint64 &a, const quint64 &b, const quint64 &c)
-{
-    return ((a << 32) | (b << 16) | (c));
 }
