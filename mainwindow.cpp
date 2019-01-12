@@ -33,7 +33,7 @@ main_window::main_window(QWidget *parent)
     connect(ui->actionAbout, &QAction::triggered, this, &main_window::show_about_dialog);
     connect(ui->lineEdit, &QLineEdit::returnPressed, this, &main_window::searching);
     connect(ui->actionCancel, SIGNAL(released()), SLOT(stop_search()));
-    connect(&scanner, &QFileSystemWatcher::fileChanged, this, &main_window::update_file);
+
     qRegisterMetaType<my_file>("my_file");
     ui->lineEdit->setHidden(true);
     ui->label->setHidden(true);
@@ -66,8 +66,6 @@ void main_window::select_directory()
     ui->actionCancel->setHidden(false);
     ui->progressBar->setHidden(false);
     ui->progressBar->setValue(1);
-    scanner.removePaths(scanner.directories());
-    files.clear();
     if (f){
         Thread = new QThread();
         counter = new trigram_counter(dir);
@@ -79,6 +77,7 @@ void main_window::select_directory()
                 this,
                 SLOT(onFinish1(int)));
         connect(counter, SIGNAL(send_status(qint16)), this, SLOT(show_status(qint16)));
+
         //emit start_indexing(dir);
         Thread->start();
         emit startt();
@@ -128,53 +127,7 @@ void main_window::searching()
     emit start_indexing(pattern);
 }
 
-void main_window::update_file(const QString &filename)
-{
-    QFile fileinfo(filename);
-    int ind = -1;
-    for (int i = 0; i < files.size(); i++){
-        if (files[i].filename == filename){
-            ind = i;
-            break;
-        }
-    }
-    if (!fileinfo.exists() && ind != -1){
-        files.remove(ind);
-        scanner.removePath(filename);
-    }
-    trigram_counter t;
-    if (fileinfo.exists()){
-        my_file cur = my_file(filename);
-        t.process_file(cur);
-        if (ind == -1 && cur.is_good)
-            files.push_back(cur);
-        else{
-            if (!cur.is_good){
-                if (ind != -1)
-                    files.remove(ind);
-            }
-            else{
-                if (cur.is_good && ind != -1){
-                    files.remove(ind);
-                    files.push_back(cur);
-                }
-            }
 
-        }
-
-    }
-}
-
-void main_window::show_files(my_file t)
-{
-    count++;
-    files.push_back(t);
-    scanner.addPath(t.filename);
-    QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget);
-    item->setText(0, t.filename);
-    item->setText(1, QString::number(t.trigrams.size()));
-    ui->treeWidget->addTopLevelItem(item);
-}
 
 void main_window::onFinish()
 {
@@ -213,7 +166,7 @@ void main_window::onFinish1(int sz)
     //files = q;
     //for (int i = 0; i < files.size(); i++)
         //scanner.addPath(files[i].filename);
-    ui->label_2->setText("Finished in " + QString::number(t.elapsed()) + " ms. Found " + QString::number(sz) + " files");
+    ui->label_2->setText("Finished in " + QString::number(t.elapsed()) + " ms. Found " + QString::number(sz) + "  ");
     ui->label_2->setHidden(false);
     ui->label->setHidden(false);
     ui->lineEdit->setHidden(false);

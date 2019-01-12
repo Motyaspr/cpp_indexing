@@ -26,26 +26,25 @@ private slots:
     void show_about_dialog();
     void searching();
     //void update_directory(const QString &);
-    void update_file(const QString &);
-    void show_files(my_file);
+    //void show_files(my_file);
     void onFinish();
     void show_index(QString, int);
     void stop_search();
     void show_status(qint16 x);
     void onFinish1(int);
+    void stop();
 signals:
     void start_indexing(QString);
     void startt();
 private:
     QString dir;
     std::unique_ptr<Ui::MainWindow> ui;
-    QVector<my_file> files;
     QTime t;
     int count;
     trigram_counter *counter = nullptr;
     bool f = true;
     bool is_first_searching = true;
-    QFileSystemWatcher scanner;
+
 };
 
 #endif // MAINWINDOW_H

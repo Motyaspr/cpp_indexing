@@ -77,6 +77,7 @@ int trigram_counter::check(QSet<int64_t> &set, my_file &t, QString &pattern){
 
 trigram_counter::trigram_counter(QString t)
 {
+    connect(&scanner, &QFileSystemWatcher::fileChanged, this, &trigram_counter::update_file);
     dir = t;
 }
 
@@ -114,7 +115,46 @@ void trigram_counter::prepare(QString dir1)
     total = 0;
     cur = 0;
     my_files.clear();
+    scanner.removePaths(scanner.directories());
 }
+
+void trigram_counter::update_file(const QString &filename)
+{
+    QFile fileinfo(filename);
+    int ind = -1;
+    for (int i = 0; i < my_files.size(); i++){
+        if (my_files[i].filename == filename){
+            ind = i;
+            break;
+        }
+    }
+    if (!fileinfo.exists() && ind != -1){
+        my_files.remove(ind);
+        scanner.removePath(filename);
+    }
+    trigram_counter t;
+    if (fileinfo.exists()){
+        my_file cur = my_file(filename);
+        t.process_file(cur);
+        if (ind == -1 && cur.is_good)
+            my_files.push_back(cur);
+        else{
+            if (!cur.is_good){
+                if (ind != -1)
+                    my_files.remove(ind);
+            }
+            else{
+                if (cur.is_good && ind != -1){
+                    my_files.remove(ind);
+                    my_files.push_back(cur);
+                }
+            }
+
+        }
+
+    }
+}
+
 
 void trigram_counter::get_trigram(QString &str, my_file &t)
 {

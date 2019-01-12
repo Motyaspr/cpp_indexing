@@ -4,6 +4,7 @@
 #include <my_file.h>
 #include <QVector>
 #include <QObject>
+#include <QFileSystemWatcher>
 
 static const int MAX_TRIGRAMS = 20000;
 const int BUFFER_SZ = 10 * 1024 * 1024;
@@ -21,6 +22,7 @@ public slots:
     void process_directory();
     void process_file(my_file &file);
     void prepare(QString dir);
+    void update_file(const QString &);
 signals:
     //void send_status(QString const &);
     //void send_progress(qint16);
@@ -40,7 +42,9 @@ private:
     QString dir;
     int total = 0;
     int cur = 0;
+    bool is_stopped;
     QVector<my_file> my_files;
+    QFileSystemWatcher scanner;
 };
 
 #endif // TRIGRAM_COUNTER_H
