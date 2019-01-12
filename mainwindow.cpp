@@ -37,6 +37,7 @@ main_window::main_window(QWidget *parent)
     qRegisterMetaType<my_file>("my_file");
     ui->lineEdit->setHidden(true);
     ui->label->setHidden(true);
+    ui->label_2->setHidden(true);
     ui->actionCancel->setHidden(true);
     ui->progressBar->setHidden(true);
     //scan_directory(QDir::homePath());
@@ -52,6 +53,9 @@ void main_window::select_directory()
     if (dir.length() == 0){
         return;
     }
+    count = 0;
+    t.start();
+    ui->label_2->setHidden(true);
     ui->treeWidget->clear();
     ui->actionIndex_Directory->setDisabled(true);
     ui->lineEdit->setHidden(true);
@@ -89,7 +93,10 @@ void main_window::show_about_dialog()
 
 void main_window::searching()
 {
+    t.start();
+    count = 0;
     QString pattern = ui->lineEdit->text();
+    ui->label_2->setHidden(true);
     Thread = new QThread();
     trigram_counter *counter = new trigram_counter(dir);
     ui->treeWidget->clear();
@@ -151,6 +158,7 @@ void main_window::update_file(const QString &filename)
 
 void main_window::show_files(my_file t)
 {
+    count++;
     files.push_back(t);
     scanner.addPath(t.filename);
     QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget);
@@ -161,6 +169,8 @@ void main_window::show_files(my_file t)
 
 void main_window::onFinish()
 {
+    ui->label_2->setText("Finished in " + QString::number(t.elapsed()) + " ms. Found " + QString::number(count) + " files");
+    ui->label_2->setHidden(false);
     ui->label->setHidden(false);
     ui->lineEdit->setHidden(false);
     ui->actionIndex_Directory->setDisabled(false);
@@ -171,6 +181,7 @@ void main_window::onFinish()
 
 void main_window::show_index(QString filename, int ind)
 {
+    count++;
     QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget);
     item->setText(0, filename);
     item->setText(1, QString::number(ind));

@@ -6,6 +6,7 @@
 #include <QThread>
 #include <memory>
 #include "trigram_counter.h"
+#include <QTime>
 
 namespace Ui {
 class MainWindow;
@@ -37,6 +38,8 @@ private:
     QString dir;
     std::unique_ptr<Ui::MainWindow> ui;
     QVector<my_file> files;
+    QTime t;
+    int count;
     QFileSystemWatcher scanner;
     //trigram_counter *counter = nullptr;
 };
